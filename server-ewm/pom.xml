@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>server-ewm</artifactId>
+    <artifactId>server-evm</artifactId>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
