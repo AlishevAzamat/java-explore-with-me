@@ -32,7 +32,7 @@ services:
     depends_on:
       - ewm-db
     environment:
-      - DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/stats
+      - DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm
       - POSTGRES_USER=users
       - POSTGRES_PASSWORD=root
 

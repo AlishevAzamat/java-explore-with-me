@@ -4,6 +4,7 @@ package ru.practicum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.service.StatService;
 
 import javax.validation.Valid;
 import java.util.List;
