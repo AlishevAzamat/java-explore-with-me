@@ -1,8 +1,8 @@
-package ru.practicum.model;
+package ru.practicum.stats.service.model;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.HitDto;
-import ru.practicum.StatsDto;
+import ru.practicum.stats.dto.HitDto;
+import ru.practicum.stats.dto.StatsDto;
 
 @Component
 public class HitMapper {

@@ -1,4 +1,4 @@
-package ru.practicum.model;
+package ru.practicum.stats.dto;
 
 import lombok.*;
 
@@ -7,8 +7,8 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Stats {
+public class StatsDto {
     private String app;
     private String uri;
-    private long hits;
+    private Long hits;
 }

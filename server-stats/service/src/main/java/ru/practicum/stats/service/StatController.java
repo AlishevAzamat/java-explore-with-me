@@ -1,10 +1,12 @@
-package ru.practicum;
+package ru.practicum.stats.service;
 
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.service.StatService;
+import ru.practicum.stats.service.service.StatService;
+import ru.practicum.stats.dto.HitDto;
+import ru.practicum.stats.dto.StatsDto;
 
 import javax.validation.Valid;
 import java.util.List;
