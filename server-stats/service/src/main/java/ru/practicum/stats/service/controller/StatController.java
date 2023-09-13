@@ -1,12 +1,14 @@
-package ru.practicum.stats.service;
+package ru.practicum.stats.service.controller;
 
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.stats.service.service.StatService;
 import ru.practicum.stats.dto.HitDto;
+import ru.practicum.stats.dto.NewHitDto;
 import ru.practicum.stats.dto.StatsDto;
+import ru.practicum.stats.service.service.StatService;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -18,7 +20,8 @@ public class StatController {
     private final StatService service;
 
     @PostMapping("/hit")
-    public HitDto createStat(@RequestBody @Valid HitDto dto) {
+    @ResponseStatus(value = HttpStatus.CREATED)
+    public HitDto createStat(@RequestBody @Valid NewHitDto dto) {
         log.info("Обновление статистики: сохранение {}", dto);
         return service.create(dto);
     }
@@ -31,5 +34,12 @@ public class StatController {
         log.info("Получение статистики с параметрами: start {}, end {}, uris {}, unique {}",
                 startStr, endStr, uris, unique);
         return service.getStatus(startStr, endStr, uris, unique);
+    }
+
+    @GetMapping("/stats/views")
+    public Long getStats(@RequestParam String uris) {
+        log.info("Получение статистики для event: uris {}",
+                uris);
+        return service.getViews(uris);
     }
 }
