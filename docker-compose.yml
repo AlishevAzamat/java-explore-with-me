@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.8'
 services:
   stats-server:
     build: ./server-stats/service
@@ -29,6 +29,7 @@ services:
     container_name: ewm_service
     ports:
       - "8080:8080"
+      - "8081:8081"
     depends_on:
       - ewm-db
     environment:

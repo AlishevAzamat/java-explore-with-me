@@ -5,6 +5,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.server.client.StatsClient;
 import ru.practicum.server.dto.EventDto;
 import ru.practicum.server.dto.EventShortDto;
 import ru.practicum.server.dto.NewEventDto;
@@ -22,7 +23,6 @@ import ru.practicum.server.model.Category;
 import ru.practicum.server.model.Event;
 import ru.practicum.server.model.User;
 import ru.practicum.server.repository.EventRepository;
-import ru.practicum.stats.client.StatsClient;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
