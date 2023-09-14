@@ -1,7 +1,6 @@
 package ru.practicum.server.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -41,7 +40,6 @@ public class EventServiceImpl implements EventService {
     private final EventMapper mapper;
     private final CategoryMapper categoryMapper;
     private final UserMapper userMapper;
-    @Autowired
     private final StatsClient client;
 
     @Override

@@ -1,9 +1,7 @@
 package ru.practicum.stats.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.NotBlank;
 
@@ -11,9 +9,10 @@ import javax.validation.constraints.NotBlank;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class NewHitDto {
     @NotBlank
-    private String uri;
+    String uri;
     @NotBlank
-    private String ip;
+    String ip;
 }
