@@ -11,7 +11,6 @@ import ru.practicum.server.service.CompilationService;
 import ru.practicum.server.service.EventService;
 import ru.practicum.server.service.UserService;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 
