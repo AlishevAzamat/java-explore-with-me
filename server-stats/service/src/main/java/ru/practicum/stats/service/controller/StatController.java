@@ -17,13 +17,13 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class StatController {
-    private final StatService service;
+    private final StatService statService;
 
     @PostMapping("/hit")
     @ResponseStatus(value = HttpStatus.CREATED)
     public HitDto createStat(@RequestBody @Valid NewHitDto dto) {
         log.info("Обновление статистики: сохранение {}", dto);
-        return service.create(dto);
+        return statService.create(dto);
     }
 
     @GetMapping("/stats")
@@ -33,13 +33,13 @@ public class StatController {
                                    @RequestParam(defaultValue = "false", required = false) Boolean unique) {
         log.info("Получение статистики с параметрами: start {}, end {}, uris {}, unique {}",
                 startStr, endStr, uris, unique);
-        return service.getStatus(startStr, endStr, uris, unique);
+        return statService.getStatus(startStr, endStr, uris, unique);
     }
 
     @GetMapping("/stats/views")
     public Long getStats(@RequestParam String uris) {
         log.info("Получение статистики для event: uris {}",
                 uris);
-        return service.getViews(uris);
+        return statService.getViews(uris);
     }
 }

@@ -4,6 +4,9 @@ import org.springframework.stereotype.Component;
 import ru.practicum.server.dto.CategoryDto;
 import ru.practicum.server.model.Category;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 public class CategoryMapper {
     public Category toCategory(CategoryDto categoryDto) {
@@ -17,5 +20,11 @@ public class CategoryMapper {
                 .id(category.getId())
                 .name(category.getName())
                 .build();
+    }
+
+    public List<CategoryDto> toCategoryDto(List<Category> categories) {
+        return categories.stream()
+                .map(this::toCategoryDto)
+                .collect(Collectors.toList());
     }
 }

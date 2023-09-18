@@ -1,8 +1,7 @@
-package ru.practicum.server.service;
+package ru.practicum.server.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.server.client.StatsClient;
@@ -23,6 +22,10 @@ import ru.practicum.server.model.Category;
 import ru.practicum.server.model.Event;
 import ru.practicum.server.model.User;
 import ru.practicum.server.repository.EventRepository;
+import ru.practicum.server.service.CategoryService;
+import ru.practicum.server.service.EventService;
+import ru.practicum.server.service.UserService;
+import ru.practicum.server.utils.PaginationUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -34,38 +37,38 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
-    private final EventRepository repository;
+    private final EventRepository eventRepository;
     private final UserService userService;
     private final CategoryService categoryService;
-    private final EventMapper mapper;
+    private final EventMapper eventMapper;
     private final CategoryMapper categoryMapper;
     private final UserMapper userMapper;
-    private final StatsClient client;
+    private final StatsClient statsClient;
 
     @Override
     @Transactional
     public EventDto create(NewEventDto newEventDto, Long userId) {
-        Event event = mapper.toEvent(newEventDto);
+        Event event = eventMapper.toEvent(newEventDto);
         event.setInitiator(userService.getUser(userId));
         event.setCategory(categoryService.getCategory(newEventDto.getCategory()));
-        event = repository.save(event);
+        event = eventRepository.save(event);
 
-        return mapper.toEventDto(event, userMapper.toUserShortDto(event.getInitiator()),
+        return eventMapper.toEventDto(event, userMapper.toUserShortDto(event.getInitiator()),
                 categoryMapper.toCategoryDto(event.getCategory()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<EventDto> getAll(List<Long> usersId, List<String> statesStr, List<Long> catsId, String startStr, String endStr, int from, int size) {
-        int pageNumber = (int) Math.ceil((double) from / size);
         List<Event> events;
         List<User> users = null;
         List<Category> categories = null;
         LocalDateTime start = null;
         LocalDateTime end = null;
         List<State> states = new ArrayList<>();
+        PageRequest pageRequest = PaginationUtil.getPage(from, size);
         if (usersId == null && statesStr == null && catsId == null && startStr == null && endStr == null) {
-            events = repository.findAll(PageRequest.of(pageNumber, size)).toList();
+            events = eventRepository.findAll(pageRequest).toList();
         } else {
             if (statesStr != null) {
                 for (String state : statesStr) {
@@ -84,14 +87,14 @@ public class EventServiceImpl implements EventService {
             if (endStr != null) {
                 end = fromString(endStr);
             }
-            events = repository.findAllEventsForAdminBy(users, states, categories,
-                    start, end, PageRequest.of(pageNumber, size));
+            events = eventRepository.findAllEventsForAdminBy(users, states, categories,
+                    start, end, pageRequest);
         }
         return toEventDtoList(events);
     }
 
     @Override
-    public EventDto published(Long id, UpdateEventDto updateEventDto) {
+    public EventDto updatePublication(Long id, UpdateEventDto updateEventDto) {
         Event event = getEventById(id);
         if (event.getState() != State.PENDING) {
             throw new ConflictException("Вы не можете опубликовать уже опубликованное или отклонёное событие.");
@@ -102,9 +105,9 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public List<EventDto> getAllByUser(Long userId, int from, int size) {
-        int pageNumber = (int) Math.ceil((double) from / size);
-        List<Event> events = repository.findByInitiatorId(userId,
-                PageRequest.of(pageNumber, size, Sort.by("id").ascending())).toList();
+        PageRequest pageRequest = PaginationUtil.getPageRequestAsc(from, size, "id");
+        List<Event> events = eventRepository.findByInitiatorId(userId,
+                pageRequest).toList();
         return toEventDtoList(events);
     }
 
@@ -113,17 +116,16 @@ public class EventServiceImpl implements EventService {
     public List<EventDto> getAllPublic(String text, Boolean paid, List<Long> catsId, String startStr, String endStr,
                                        boolean onlyAvailable, String sortStr, int from, int size, HttpServletRequest request) {
         List<Event> events = List.of();
-        int pageNumber = (int) Math.ceil((double) from / size);
         if (text == null || text.isBlank() && catsId == null && paid != null && startStr != null && endStr != null) {
             if (sortStr == null) {
-                events = repository.findAll(PageRequest.of(pageNumber, size)).toList();
+                events = eventRepository.findAll(PaginationUtil.getPage(from, size)).toList();
             } else {
                 switch (Sorts.fromString(sortStr)) {
                     case VIEWS:
-                        events = repository.findAll(PageRequest.of(pageNumber, size, Sort.by("views").ascending())).toList();
+                        events = eventRepository.findAll(PaginationUtil.getPageRequestAsc(from, size, "views")).toList();
                         break;
                     case EVENT_DATE:
-                        events = repository.findAll(PageRequest.of(pageNumber, size, Sort.by("eventDate").ascending())).toList();
+                        events = eventRepository.findAll(PaginationUtil.getPageRequestAsc(from, size, "eventDate")).toList();
                         break;
                 }
             }
@@ -147,26 +149,26 @@ public class EventServiceImpl implements EventService {
             if (sortStr != null) {
                 sort = Sorts.fromString(sortStr);
             }
-            events = repository.findAllEventsForUserBy(text, paid, categories, start, end, onlyAvailable,
-                    sort, PageRequest.of(pageNumber, size));
+            events = eventRepository.findAllEventsForUserBy(text, paid, categories, start, end, onlyAvailable,
+                    sort, PaginationUtil.getPage(from, size));
         }
-        client.createHit(request);
+        statsClient.createHit(request);
         events = events.stream()
-                .peek(event -> event.setViews(client.getStatsUnique(request.getRequestURI()).getBody()))
+                .peek(event -> event.setViews(statsClient.getStatsUnique(request.getRequestURI()).getBody()))
                 .collect(Collectors.toList());
-        repository.saveAll(events);
+        eventRepository.saveAll(events);
         return toEventDtoList(events);
     }
 
     @Override
     @Transactional(readOnly = true)
     public EventDto getPublicById(Long id, HttpServletRequest request) {
-        Event event = repository.findByIdAndStateIn(id, List.of(State.PUBLISHED))
+        Event event = eventRepository.findByIdAndStateIn(id, List.of(State.PUBLISHED))
                 .orElseThrow(() -> new NotFoundException(String.format("Категории с id %d не найдено", id)));
-        client.createHit(request);
-        event.setViews(client.getStatsUnique(request.getRequestURI()).getBody());
+        statsClient.createHit(request);
+        event.setViews(statsClient.getStatsUnique(request.getRequestURI()).getBody());
         saveEvent(event);
-        return mapper.toEventDto(event, userMapper.toUserShortDto(event.getInitiator()), categoryMapper.toCategoryDto(event.getCategory()));
+        return eventMapper.toEventDto(event, userMapper.toUserShortDto(event.getInitiator()), categoryMapper.toCategoryDto(event.getCategory()));
     }
 
     @Override
@@ -176,7 +178,7 @@ public class EventServiceImpl implements EventService {
         if (!userService.getUser(userId).getId().equals(event.getInitiator().getId())) {
             throw new ValidationException("Вы не являетесь инициатором события.");
         } else {
-            return mapper.toEventDto(event, userMapper.toUserShortDto(event.getInitiator()),
+            return eventMapper.toEventDto(event, userMapper.toUserShortDto(event.getInitiator()),
                     categoryMapper.toCategoryDto(event.getCategory()));
         }
     }
@@ -197,21 +199,21 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public Event getEventById(Long id) {
-        return repository.findById(id)
+        return eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Категории с id %d не найдено", id)));
     }
 
     @Override
     @Transactional
     public Event saveEvent(Event event) {
-        return repository.save(event);
+        return eventRepository.save(event);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Event> getAllEvents(List<Long> ids) {
         if (ids != null) {
-            return repository.findAllById(ids);
+            return eventRepository.findAllById(ids);
         } else {
             return List.of();
         }
@@ -220,7 +222,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getShortEvent(List<Event> events) {
         return events.stream()
-                .map(event -> mapper.toEventShortDto(event,
+                .map(event -> eventMapper.toEventShortDto(event,
                         userMapper.toUserShortDto(event.getInitiator()),
                         categoryMapper.toCategoryDto(event.getCategory())))
                 .collect(Collectors.toList());
@@ -236,7 +238,7 @@ public class EventServiceImpl implements EventService {
             return List.of();
         } else {
             return events.stream()
-                    .map(event -> mapper.toEventDto(event,
+                    .map(event -> eventMapper.toEventDto(event,
                             userMapper.toUserShortDto(event.getInitiator()),
                             categoryMapper.toCategoryDto(event.getCategory())))
                     .collect(Collectors.toList());
@@ -284,7 +286,7 @@ public class EventServiceImpl implements EventService {
             event.setRequestModeration(eventDto.getRequestModeration());
         }
 
-        return mapper.toEventDto(saveEvent(event),
+        return eventMapper.toEventDto(saveEvent(event),
                 userMapper.toUserShortDto(event.getInitiator()),
                 categoryMapper.toCategoryDto(event.getCategory()));
     }

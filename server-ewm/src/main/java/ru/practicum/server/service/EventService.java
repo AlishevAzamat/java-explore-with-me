@@ -14,7 +14,7 @@ public interface EventService {
 
     List<EventDto> getAll(List<Long> users, List<String> states, List<Long> catsId, String startStr, String endStr, int from, int size);
 
-    EventDto published(Long id, UpdateEventDto eventDto);
+    EventDto updatePublication(Long id, UpdateEventDto eventDto);
 
     List<EventDto> getAllByUser(Long userId, int from, int size);
 

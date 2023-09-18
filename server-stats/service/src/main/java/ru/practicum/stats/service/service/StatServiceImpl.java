@@ -19,13 +19,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class StatServiceImpl implements StatService {
-    private final StatRepository repository;
-    private final HitMapper mapper;
+    private final StatRepository statRepository;
+    private final HitMapper hitMapper;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public HitDto create(NewHitDto dto) {
-        Hit hit = repository.save(mapper.toHit(dto));
-        return mapper.toHitDto(hit);
+        Hit hit = statRepository.save(hitMapper.toHit(dto));
+        return hitMapper.toHitDto(hit);
     }
 
     @Override
@@ -38,22 +38,22 @@ public class StatServiceImpl implements StatService {
         }
         if (uris != null) {
             if (unique) {
-                hits = repository.findStats(uris, start, end);
+                hits = statRepository.findStats(uris, start, end);
             } else {
-                hits = repository.findStatsWithoutUnique(uris, start, end);
+                hits = statRepository.findStatsWithoutUnique(uris, start, end);
             }
         } else {
             if (unique) {
-                hits = repository.findStatsWithoutUris(start, end);
+                hits = statRepository.findStatsWithoutUris(start, end);
             } else {
-                hits = repository.findStatsWithoutUrisAndUnique(start, end);
+                hits = statRepository.findStatsWithoutUrisAndUnique(start, end);
             }
         }
-        return hits.stream().map(mapper::toStatsDto).collect(Collectors.toList());
+        return hits.stream().map(hitMapper::toStatsDto).collect(Collectors.toList());
     }
 
     @Override
     public Long getViews(String uris) {
-        return repository.findStatsUrisAndUnique(uris).getHits();
+        return statRepository.findStatsUrisAndUnique(uris).getHits();
     }
 }
