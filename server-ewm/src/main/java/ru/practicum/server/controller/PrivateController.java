@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.server.dto.*;
+import ru.practicum.server.service.CommentService;
 import ru.practicum.server.service.EventService;
 import ru.practicum.server.service.RequestService;
 
@@ -20,6 +21,7 @@ import java.util.List;
 public class PrivateController {
     private final EventService eventService;
     private final RequestService requestService;
+    private final CommentService commentService;
 
     @PostMapping("/users/{userId}/events")
     @ResponseStatus(value = HttpStatus.CREATED)
@@ -37,7 +39,7 @@ public class PrivateController {
     }
 
     @GetMapping("/users/{userId}/events/{eventId}")
-    public EventDto getEventByUser(@PathVariable Long userId, @Positive @PathVariable Long eventId) {
+    public EventWithCommentDto getEventByUser(@PathVariable Long userId, @Positive @PathVariable Long eventId) {
         log.debug("Контроллер - запрос на получение: eventId = {}, от инициатора userId {}", eventId, userId);
         return eventService.getForUserById(userId, eventId);
     }
@@ -80,5 +82,33 @@ public class PrivateController {
     public List<RequestDto> getRequestByUser(@PathVariable Long userId) {
         log.debug("Контроллер - запрос на получение заявок от пользователя с id {}", userId);
         return requestService.getByUser(userId);
+    }
+
+    @PostMapping("/users/{userId}/comment")
+    @ResponseStatus(value = HttpStatus.CREATED)
+    public CommentDto createComment(@RequestParam Long eventId,
+                                    @PathVariable Long userId,
+                                    @Valid @RequestBody RequestCommentDto commentDto) {
+        return commentService.create(eventId, userId, commentDto);
+    }
+
+    @PatchMapping("/users/{userId}/comment/{comId}")
+    public CommentDto updateComment(@Positive @PathVariable Long userId,
+                                    @PathVariable Long comId,
+                                    @Valid @RequestBody RequestCommentDto commentDto) {
+        return commentService.update(userId, comId, commentDto);
+    }
+
+    @GetMapping("/users/{userId}/comment")
+    public List<EventWithCommentDto> getEventByCommentAndUser(@Positive @PathVariable Long userId,
+                                                              @RequestParam(defaultValue = "0") Integer from,
+                                                              @RequestParam(defaultValue = "10") Integer size) {
+        return commentService.getCommentEventDtoByUser(userId, from, size);
+    }
+
+    @DeleteMapping("/users/{userId}/comment")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteByUser(@Positive @PathVariable Long userId, @RequestParam(required = false) List<Long> comsId) {
+        commentService.deleteByUser(userId, comsId);
     }
 }

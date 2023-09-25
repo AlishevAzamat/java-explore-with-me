@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.server.dto.CategoryDto;
+import ru.practicum.server.dto.EventWithCommentDto;
 import ru.practicum.server.dto.CompilationDto;
 import ru.practicum.server.dto.EventDto;
 import ru.practicum.server.service.CategoryService;
@@ -73,7 +74,7 @@ public class PublicController {
     }
 
     @GetMapping("/events/{id}")
-    public EventDto getEvent(@PathVariable Long id, HttpServletRequest request) {
+    public EventWithCommentDto getEvent(@PathVariable Long id, HttpServletRequest request) {
         log.debug("Контроллер - запрос на публичное получение: {}", id);
         log.info("client ip: {}", request.getRemoteAddr());
         log.info("endpoint path: {}", request.getRequestURI());

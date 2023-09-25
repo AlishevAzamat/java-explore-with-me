@@ -13,6 +13,7 @@ import ru.practicum.server.exception.ConflictException;
 import ru.practicum.server.exception.NotFoundException;
 import ru.practicum.server.exception.ValidationException;
 
+import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -101,5 +102,17 @@ public class ErrorHandlerController {
                 .message(e.getLocalizedMessage())
                 .reason(e.getMessage())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleConstraintViolationException(final ConstraintViolationException e) {
+        log.debug("Получен статус 400 Bad request {}", e.getMessage(), e);
+        return ApiError.builder()
+                .timestamp(LocalDateTime.now())
+                .errors(List.of(e.getStackTrace()))
+                .message(e.getLocalizedMessage())
+                .reason(e.getMessage())
+                .status(HttpStatus.BAD_REQUEST).build();
     }
 }

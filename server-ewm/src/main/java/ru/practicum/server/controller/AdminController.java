@@ -6,10 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.server.dto.*;
-import ru.practicum.server.service.CategoryService;
-import ru.practicum.server.service.CompilationService;
-import ru.practicum.server.service.EventService;
-import ru.practicum.server.service.UserService;
+import ru.practicum.server.service.*;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -23,6 +20,7 @@ public class AdminController {
     private final EventService eventService;
     private final UserService userService;
     private final CompilationService compilationService;
+    private final CommentService commentService;
 
     @PostMapping("/admin/categories")
     @ResponseStatus(value = HttpStatus.CREATED)
@@ -101,5 +99,20 @@ public class AdminController {
     @PatchMapping("/admin/compilations/{compId}")
     public CompilationDto updateCompilation(@PathVariable Long compId, @RequestBody NewCompilationDto compilationDto) {
         return compilationService.update(compId, compilationDto);
+    }
+
+    @GetMapping("/admin/comment")
+    public List<CommentDto> getAllComment(@RequestParam(name = "start", required = false) String startStr,
+                                          @RequestParam(name = "end", required = false) String endStr,
+                                          @RequestParam(defaultValue = "NEW") String sort,
+                                          @RequestParam(defaultValue = "0") Integer from,
+                                          @RequestParam(defaultValue = "10") Integer size) {
+        return commentService.getAllCommentDto(startStr, endStr, sort, from, size);
+    }
+
+    @DeleteMapping("/admin/comment")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteByAdmin(@RequestParam List<Long> comsId) {
+        commentService.deleteByAdmin(comsId);
     }
 }
