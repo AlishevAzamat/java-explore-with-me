@@ -62,8 +62,8 @@ public class EventMapper {
                 .build();
     }
 
-    public CommentEventDto toCommentEventDto(Event event, UserShortDto userShortDto, CategoryDto categoryDto) {
-        return CommentEventDto.builder()
+    public EventWithCommentDto toCommentEventDto(Event event, UserShortDto userShortDto, CategoryDto categoryDto) {
+        return EventWithCommentDto.builder()
                 .annotation(event.getAnnotation())
                 .description(event.getDescription())
                 .eventDate(event.getEventDate())

@@ -6,7 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.server.dto.CommentDto;
-import ru.practicum.server.dto.CommentEventDto;
+import ru.practicum.server.dto.EventWithCommentDto;
 import ru.practicum.server.dto.RequestCommentDto;
 import ru.practicum.server.enums.SortComment;
 import ru.practicum.server.enums.State;
@@ -49,9 +49,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentDto update(Long userId, Long comId, RequestCommentDto commentDto) {
-        Comment comment = commentRepository.findById(comId).orElseThrow(() ->
-                new NotFoundException(String.format("Комментария с id %d не найдено", comId)));
+    public CommentDto update(Long userId, Long commentId, RequestCommentDto commentDto) {
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() ->
+                new NotFoundException(String.format("Комментария с id %d не найдено", commentId)));
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new ValidationException("Вы не являетей создателем этого комментария");
         } else {
@@ -62,7 +62,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CommentEventDto> getCommentEventDtoByUser(Long userId, int from, int size) {
+    public List<EventWithCommentDto> getCommentEventDtoByUser(Long userId, int from, int size) {
         if (userId == 0) {
             throw new ValidationException("Пользователь не может быть с id равным 0");
         }
@@ -76,77 +76,63 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CommentDto> getAllCommentDto(String startStr, String endStr, String sort, int from, int size) {
-        PageRequest pageRequestDesc = PaginationUtil.getPageRequestDesc(from, size, "created");
-        PageRequest pageRequestAsc = PaginationUtil.getPageRequestAsc(from, size, "created");
+    public List<CommentDto> getAllCommentDto(String startTimeStr, String endTimeStr, String sort, int from, int size) {
+        PageRequest pageRequest;
         SortComment sorts = SortComment.fromString(sort);
         LocalDateTime start = null;
         LocalDateTime end = null;
-        List<CommentDto> commentDtos = List.of();
-        if (startStr != null) {
-            start = dateFromString(startStr);
+        List<CommentDto> commentDtos;
+
+        if (startTimeStr != null) {
+            start = dateFromString(startTimeStr);
         }
-        if (endStr != null) {
-            end = dateFromString(endStr);
+        if (endTimeStr != null) {
+            end = dateFromString(endTimeStr);
         }
-        switch (sorts) {
-            case NEW:
-                if (start != null && end != null) {
-                    if (start.isAfter(end) || start.isEqual(end)) {
-                        throw new ValidationException("Start не должен быть позже end или быть равным ему.");
-                    } else {
-                        commentDtos = commentRepository.findByCreatedBeforeAndCreatedAfter(end, start,
-                                        pageRequestDesc)
-                                .stream()
-                                .map(commentMapper::toCommentDto)
-                                .collect(Collectors.toList());
-                    }
-                } else if (start == null && end == null) {
-                    commentDtos = commentRepository.findAll(pageRequestDesc).stream()
-                            .map(commentMapper::toCommentDto)
-                            .collect(Collectors.toList());
-                } else {
-                    throw new ValidationException("Нужна указывать либо оба параметра start, end или не указывать вообще.");
-                }
-                break;
-            case OLD:
-                if (start != null && end != null) {
-                    if (start.isAfter(end) || start.isEqual(end)) {
-                        throw new ValidationException("Start не должен быть позже end или быть равным ему.");
-                    } else {
-                        commentDtos = commentRepository.findByCreatedBeforeAndCreatedAfter(end, start,
-                                        pageRequestAsc)
-                                .stream()
-                                .map(commentMapper::toCommentDto)
-                                .collect(Collectors.toList());
-                    }
-                } else if (start == null && end == null) {
-                    commentDtos = commentRepository.findAll(pageRequestAsc).stream()
-                            .map(commentMapper::toCommentDto)
-                            .collect(Collectors.toList());
-                } else {
-                    throw new ValidationException("Нужна указывать либо оба параметра start, end или не указывать вообще.");
-                }
-                break;
+
+        if (start != null && end != null) {
+            if ((start.isAfter(end) || start.isEqual(end))) {
+                throw new ValidationException("Start не должен быть позже end или быть равным ему.");
+            }
+        }
+
+        if (sorts == SortComment.NEW) {
+            pageRequest = PaginationUtil.getPageRequestDesc(from, size, "created");
+        } else {
+            pageRequest = PaginationUtil.getPageRequestAsc(from, size, "created");
+        }
+
+        if (start == null && end == null) {
+            commentDtos = commentRepository.findAll(pageRequest).stream()
+                    .map(commentMapper::toCommentDto)
+                    .collect(Collectors.toList());
+        } else if (start != null && end != null) {
+            commentDtos = commentRepository.findByCreatedBeforeAndCreatedAfter(end, start, pageRequest)
+                    .stream()
+                    .map(commentMapper::toCommentDto)
+                    .collect(Collectors.toList());
+        } else {
+            throw new ValidationException("Нужно указывать либо оба параметра start и end, либо не указывать их вообще.");
         }
         return commentDtos;
     }
 
+
     @Override
     @Transactional
-    public void deleteByUser(Long userId, List<Long> comsId) {
-        if (comsId == null) {
+    public void deleteByUser(Long userId, List<Long> commentsId) {
+        if (commentsId == null) {
             if (userId != 0) {
                 commentRepository.deleteByAuthorId(userId);
             } else {
                 throw new ValidationException("Id пользователя не должно быть 0");
             }
         } else {
-            List<Long> validComId = comsId.stream().filter(comId -> comId <= 0).collect(Collectors.toList());
+            List<Long> validComId = commentsId.stream().filter(comId -> comId <= 0).collect(Collectors.toList());
             if (validComId.size() > 0) {
                 throw new ValidationException("Id комментариев не должно быть меньше или равным 0");
             }
-            List<Comment> comments = commentRepository.findAllById(comsId);
+            List<Comment> comments = commentRepository.findAllById(commentsId);
             List<Long> validComments = comments.stream()
                     .filter(comment -> !comment.getAuthor().getId().equals(userId))
                     .map(Comment::getId)
@@ -154,21 +140,21 @@ public class CommentServiceImpl implements CommentService {
             if (validComments.size() > 0) {
                 throw new ValidationException(String.format("Вы не являетей создателем комментариев: %s", validComments));
             } else {
-                commentRepository.deleteAllById(comsId);
+                commentRepository.deleteAllById(commentsId);
             }
         }
     }
 
     @Override
     @Transactional
-    public void deleteByAdmin(List<Long> comsId) {
-        if (comsId != null) {
-            List<Long> validComId = comsId.stream().filter(comId -> comId <= 0).collect(Collectors.toList());
+    public void deleteByAdmin(List<Long> commentsId) {
+        if (commentsId != null) {
+            List<Long> validComId = commentsId.stream().filter(comId -> comId <= 0).collect(Collectors.toList());
             if (validComId.size() > 0) {
                 throw new ValidationException("Id комментариев не должно быть меньше или равным 0");
             }
             try {
-                commentRepository.deleteAllById(comsId);
+                commentRepository.deleteAllById(commentsId);
             } catch (EmptyResultDataAccessException e) {
                 throw new ConflictException("Возможно некоторые комментарии были удалены, проверьте перед повторным удалением.");
             }

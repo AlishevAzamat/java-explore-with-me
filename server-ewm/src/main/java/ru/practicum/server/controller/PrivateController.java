@@ -39,7 +39,7 @@ public class PrivateController {
     }
 
     @GetMapping("/users/{userId}/events/{eventId}")
-    public CommentEventDto getEventByUser(@PathVariable Long userId, @Positive @PathVariable Long eventId) {
+    public EventWithCommentDto getEventByUser(@PathVariable Long userId, @Positive @PathVariable Long eventId) {
         log.debug("Контроллер - запрос на получение: eventId = {}, от инициатора userId {}", eventId, userId);
         return eventService.getForUserById(userId, eventId);
     }
@@ -100,9 +100,9 @@ public class PrivateController {
     }
 
     @GetMapping("/users/{userId}/comment")
-    public List<CommentEventDto> getEventByCommentAndUser(@Positive @PathVariable Long userId,
-                                                          @RequestParam(defaultValue = "0") Integer from,
-                                                          @RequestParam(defaultValue = "10") Integer size) {
+    public List<EventWithCommentDto> getEventByCommentAndUser(@Positive @PathVariable Long userId,
+                                                              @RequestParam(defaultValue = "0") Integer from,
+                                                              @RequestParam(defaultValue = "10") Integer size) {
         return commentService.getCommentEventDtoByUser(userId, from, size);
     }
 

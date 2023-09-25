@@ -15,7 +15,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CommentEventDto {
+public class EventWithCommentDto {
     private Long id;
     private String title;
     private String annotation;

@@ -18,9 +18,9 @@ public interface EventService {
     List<EventDto> getAllPublic(String text, Boolean paid, List<Long> catsId, String startStr, String endStr,
                                 boolean onlyAvailable, String sortStr, int from, int size, HttpServletRequest request);
 
-    CommentEventDto getPublicById(Long id, HttpServletRequest request);
+    EventWithCommentDto getPublicById(Long id, HttpServletRequest request);
 
-    CommentEventDto getForUserById(Long userId, Long eventId);
+    EventWithCommentDto getForUserById(Long userId, Long eventId);
 
     EventDto update(Long userId, Long eventId, UpdateEventDto eventDto);
 
@@ -32,5 +32,5 @@ public interface EventService {
 
     List<EventShortDto> getShortEvent(List<Event> events);
 
-    List<CommentEventDto> getCommentEventDto(List<Long> eventsId, int page, int size);
+    List<EventWithCommentDto> getCommentEventDto(List<Long> eventsId, int page, int size);
 }

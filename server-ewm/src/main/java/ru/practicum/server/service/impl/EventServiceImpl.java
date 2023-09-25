@@ -166,13 +166,13 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public CommentEventDto getPublicById(Long id, HttpServletRequest request) {
+    public EventWithCommentDto getPublicById(Long id, HttpServletRequest request) {
         Event event = eventRepository.findByIdAndStateIn(id, List.of(State.PUBLISHED))
                 .orElseThrow(() -> new NotFoundException(String.format("Категории с id %d не найдено", id)));
         statsClient.createHit(request);
         event.setViews(statsClient.getStatsUnique(request.getRequestURI()).getBody());
         saveEvent(event);
-        CommentEventDto eventDto = eventMapper.toCommentEventDto(event,
+        EventWithCommentDto eventDto = eventMapper.toCommentEventDto(event,
                 userMapper.toUserShortDto(event.getInitiator()),
                 categoryMapper.toCategoryDto(event.getCategory()));
         eventDto.setCommentDtos(commentRepository.findByEventId(eventDto.getId())
@@ -184,12 +184,12 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public CommentEventDto getForUserById(Long userId, Long eventId) {
+    public EventWithCommentDto getForUserById(Long userId, Long eventId) {
         Event event = getEventById(eventId);
         if (!userService.getUser(userId).getId().equals(event.getInitiator().getId())) {
             throw new ValidationException("Вы не являетесь инициатором события.");
         } else {
-            CommentEventDto eventDto = eventMapper.toCommentEventDto(event,
+            EventWithCommentDto eventDto = eventMapper.toCommentEventDto(event,
                     userMapper.toUserShortDto(event.getInitiator()),
                     categoryMapper.toCategoryDto(event.getCategory()));
             eventDto.setCommentDtos(commentRepository.findByEventId(eventDto.getId())
@@ -246,8 +246,8 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<CommentEventDto> getCommentEventDto(List<Long> eventsId, int page, int size) {
-        List<CommentEventDto> commentEventDtos = eventRepository.findByIdIn(eventsId, PageRequest.of(page, size))
+    public List<EventWithCommentDto> getCommentEventDto(List<Long> eventsId, int page, int size) {
+        List<EventWithCommentDto> commentEventDtos = eventRepository.findByIdIn(eventsId, PageRequest.of(page, size))
                 .stream()
                 .map(event -> eventMapper.toCommentEventDto(event,
                         userMapper.toUserShortDto(event.getInitiator()),
@@ -258,7 +258,7 @@ public class EventServiceImpl implements EventService {
                 .filter(comment -> comment.getEvent() != null)
                 .collect(groupingBy(comment -> comment.getEvent().getId(),
                         Collectors.mapping(commentMapper::toCommentDto, Collectors.toList())));
-        for (CommentEventDto eventDto : commentEventDtos) {
+        for (EventWithCommentDto eventDto : commentEventDtos) {
             eventDto.setCommentDtos(commentsMap.getOrDefault(eventDto.getId(), List.of()));
         }
         return commentEventDtos;
